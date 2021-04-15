@@ -281,8 +281,16 @@ void MainWindow::textOnVideo_show_over(void)
 {
 	tmpShowTimer->stop();
 	textOnVideo->hide();
-	*sys_state = WORK_STA_NORMAL;
+
 	mainwin_mode = MAINWIN_MODE_NORAML;
+	if(*sys_state == WORK_STA_RECOGN)
+	{
+		*sys_state = WORK_STA_NORMAL;
+	}
+	else
+	{
+		printf("ERROR: %s: *sys_state = %d\n", __FUNCTION__, *sys_state);
+	}
 }
 
 /* switch mainwindow display mode: normal, add user, add user ok, recognzie ... */

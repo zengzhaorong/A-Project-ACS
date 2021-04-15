@@ -245,7 +245,7 @@ int face_database_train(void)
 	ret = user_get_faceimg_label(images, labels);
 	if(ret<0 || images.size() <= 0)
 	{
-		printf("read csv: No images !\n");
+		printf("%s: No images !\n", __FUNCTION__);
 		goto ERR_TRAIN;
 	}
 
