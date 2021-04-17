@@ -46,7 +46,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 	videoArea->setGeometry(0, 0, CONFIG_CAPTURE_WIDTH(main_mngr.config_ini), CONFIG_CAPTURE_HEIGH(main_mngr.config_ini));
 	videoArea->show();
 	
-	font.setPointSize(20);
+	font.setPointSize(CONFIG_WINDOW_FONT_SIZE(main_mngr.config_ini));
 	pa.setColor(QPalette::WindowText,Qt::yellow);
 	textOnVideo = new QLabel(mainWindow);
 	textOnVideo->setFont(font);
