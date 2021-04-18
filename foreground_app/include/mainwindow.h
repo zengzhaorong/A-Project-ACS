@@ -41,6 +41,7 @@ extern "C" {
 #define TEXT_RECOGN_SUCCESS		"识别成功"			// "识别成功"、"签到成功"、"欢迎回家"
 #define TEXT_ADD_USER			"添加用户"
 #define TEXT_DEL_USER			"删除用户"
+#define TEXT_SWIT_CAPTURE		"切换画面"
 
 
 typedef enum {
@@ -63,6 +64,7 @@ private slots:
 	void showMainwindow(void);
 	void addUser(void);
 	void deleteUser(void);
+	void switchCapture(void);
 	void textOnVideo_show_over(void);
 	
 public:
@@ -80,6 +82,7 @@ private:
 	QLineEdit		*userNameEdit;		// edit add user name
 	QPushButton 	*addUserBtn;		// add user button
 	QPushButton 	*delUserBtn;		// delete user button
+	QPushButton 	*switchCaptureBtn;		// switch capture button
 	unsigned char 	*video_buf;
 	unsigned int 	buf_size;
 	

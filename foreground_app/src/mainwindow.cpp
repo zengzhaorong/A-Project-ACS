@@ -101,6 +101,13 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 	tableView->hide();
 #endif
 
+#if !defined(USER_CLIENT_ENABLE) && defined(MANAGER_CLIENT_ENABLE)
+	switchCaptureBtn = new QPushButton(mainWindow);
+	switchCaptureBtn->setText(codec->toUnicode(TEXT_SWIT_CAPTURE));
+    connect(switchCaptureBtn, SIGNAL(clicked()), this, SLOT(switchCapture()));
+	switchCaptureBtn->setGeometry(560, 450, 80, 30);
+#endif
+
 	buf_size = CONFIG_CAPTURE_WIDTH(main_mngr.config_ini) *CONFIG_CAPTURE_HEIGH(main_mngr.config_ini) *3;
 	video_buf = (unsigned char *)malloc(buf_size);
 	if(video_buf == NULL)
@@ -139,7 +146,7 @@ void MainWindow::showMainwindow(void)
 	clockLabel->setText(str);
 
 	/* show capture image */
-	ret = capture_getframe(video_buf, buf_size, &len);
+	ret = capture_get_newframe(video_buf, buf_size, &len);
 	if(ret == 0)
 	{
 		QImage videoQImage;
@@ -236,6 +243,14 @@ void MainWindow::addUser(void)
 		return ;
 	}
 
+	/* close remote capture */
+	if(main_mngr.capture_flag == 1)
+	{
+		proto_0x20_switchCapture(main_mngr.mngr_handle, 0);
+		main_mngr.capture_flag = 0;
+		v4l2cap_clear_newframe();
+	}
+
 	ba = NameStr.toLatin1();
 	memset(name, 0, sizeof(name));
 	strncpy((char *)name, ba.data(), strlen(ba.data()));
@@ -277,17 +292,34 @@ void MainWindow::deleteUser(void)
 		
 }
 
+void MainWindow::switchCapture(void)
+{
+
+	if(main_mngr.capture_flag == 0)
+	{
+		main_mngr.capture_flag = 1;
+		v4l2cap_clear_newframe();
+	}
+	else
+	{
+		main_mngr.capture_flag = 0;
+		videoArea->setPixmap(QPixmap::fromImage(backgroundImg));
+	}
+	
+	proto_0x20_switchCapture(main_mngr.mngr_handle, main_mngr.capture_flag);
+}
+
 void MainWindow::textOnVideo_show_over(void)
 {
 	tmpShowTimer->stop();
 	textOnVideo->hide();
-
+	
 	mainwin_mode = MAINWIN_MODE_NORAML;
 	if(*sys_state == WORK_STA_RECOGN)
 	{
 		*sys_state = WORK_STA_NORMAL;
 	}
-	else
+	else if(*sys_state != WORK_STA_NORMAL)
 	{
 		printf("ERROR: %s: *sys_state = %d\n", __FUNCTION__, *sys_state);
 	}

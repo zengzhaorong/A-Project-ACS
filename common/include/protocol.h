@@ -35,12 +35,12 @@ struct detect_info
 	int pack_len;
 };
 
-typedef int (*send_func_t)(int fd, uint8_t *data, int len);
+typedef int (*send_func_t)(void *arg, uint8_t *data, int len);
 
 struct proto_object
 {
 	int used;
-	int fd;
+	void *arg;
 	send_func_t send_func;
 	uint8_t	*send_buf;
 	int buf_size;
@@ -66,13 +66,16 @@ int proto_0x10_getOneFrame(int handle);
 int proto_0x11_sendFaceDetect(int handle, uint8_t count, struct Rect_params *face_rect);
 int proto_0x12_sendFaceRecogn(int handle, int face_id, uint8_t confid, char *face_name, int status);
 
+int proto_0x20_switchCapture(int handle, int flag);
+int proto_0x21_sendCaptureFrame(int handle, int format, void *frame, int len);
+
 int proto_makeupPacket(uint8_t seq, uint8_t cmd, int len, uint8_t *data, \
 								uint8_t *outbuf, int size, int *outlen);
 int proto_analyPacket(uint8_t *pack, int packLen, uint8_t *seq, \
 								uint8_t *cmd, int *len, uint8_t **data);
 int proto_detectPack(struct ringbuffer *ringbuf, struct detect_info *detect, \
 								uint8_t *proto_data, int size, int *proto_len);
-int proto_register(int fd, send_func_t send_func, int buf_size);
+int proto_register(void *arg, send_func_t send_func, int buf_size);
 void proto_unregister(int handle);
 int proto_init(void);
 

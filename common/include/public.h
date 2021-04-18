@@ -54,6 +54,7 @@ struct main_mngr_info
 	workstate_e work_state;
 	int user_handle;	// user client socket handle index
 	int mngr_handle;	// manager client socket handle index
+	int capture_flag;	// 0-local, 1-remote
 };
 
 
