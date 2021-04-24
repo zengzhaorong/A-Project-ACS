@@ -60,7 +60,7 @@ int remove_dir(const char *dir)
     return 0;
 }
 
-int user_delete(int userCnt, char *username)
+int user_delete_faceimg(int userCnt, char *username)
 {
 	struct userMngr_Stru *user_mngr = &user_mngr_unit;
 	struct userdb_user userInfo;
@@ -74,7 +74,6 @@ int user_delete(int userCnt, char *username)
 		{
 			continue;
 		}
-		ret = userdb_delete_byName(user_mngr->userdb, username+i*USER_NAME_LEN);
 
 		memset(dir_name, 0, sizeof(dir_name));
 		sprintf(dir_name, "%s/%d_%s", FACES_DATABASE_PATH, userInfo.id, userInfo.name);
