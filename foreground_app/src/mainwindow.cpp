@@ -71,6 +71,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 #ifdef MANAGER_CLIENT_ENABLE
 	image.load(EXTRAINFO_MNGR_IMG);
 	widget_height = 130;
+	(void)funcArea_height;
 #else
 	image.load(EXTRAINFO_USER_IMG);
 	widget_height = funcArea_height - y_pix;

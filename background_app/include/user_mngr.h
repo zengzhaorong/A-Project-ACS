@@ -35,7 +35,8 @@ struct userMngr_Stru
 };
 
 
-int user_delete_faceimg(int userCnt, char *username);
+int user_add(struct userdb_user *user);
+int user_delete(char *username);
 int user_create_dir(char *base_dir, int id, char *usr_name, char *usr_dir);
 int user_get_faceimg_label(vector<Mat>& images, vector<int>& labels);
 int user_mngr_init(void);

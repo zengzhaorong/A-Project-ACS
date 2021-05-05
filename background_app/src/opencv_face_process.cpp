@@ -419,7 +419,7 @@ void *opencv_face_detect_thread(void *arg)
 					user.id = user_mngr_unit.newid;
 					memcpy(user.name, user_mngr_unit.newname, USER_NAME_LEN);
 					memcpy(user.facepath, user_mngr_unit.add_userdir, DIR_PATH_LEN);
-					userdb_write(user_mngr_unit.userdb, &user);
+					user_add(&user);
 					main_mngr.work_state = WORK_STA_NORMAL;
 					face_recogn_unit.recogn_avalid = 0;
 					ret = face_database_train();

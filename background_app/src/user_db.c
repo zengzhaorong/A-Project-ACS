@@ -242,7 +242,7 @@ int userdb_init(sqlite3 **ppdb)
     }
 
     /* create db table */
-	sprintf(sql_cmd, "CREATE TABLE %s(%s INT PRIMARY KEY NOT NULL, %s CHAR(%d) NOT NULL, %s TEXT);", \
+	sprintf(sql_cmd, "CREATE TABLE IF NOT EXISTS  %s(%s INT PRIMARY KEY NOT NULL, %s CHAR(%d) NOT NULL, %s TEXT);", \
 					USERDB_TABLE, USERDB_COL_ID, USERDB_COL_NAME, USER_NAME_LEN, USERDB_COL_FACEPATH);
     //printf("%s: cmd: %s\n", __FUNCTION__, sql_cmd);
     ret = sqlite3_exec(*ppdb, sql_cmd, NULL, NULL, &errMsg);

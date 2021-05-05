@@ -283,6 +283,7 @@ int proto_0x12_sendFaceRecogn(int handle, int face_id, uint8_t confid, char *fac
 
 	return 0;
 }
+
 int proto_0x20_switchCapture(int handle, int flag)
 {
 	uint8_t *protoBuf = NULL;

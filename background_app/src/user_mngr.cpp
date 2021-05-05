@@ -60,25 +60,37 @@ int remove_dir(const char *dir)
     return 0;
 }
 
-int user_delete_faceimg(int userCnt, char *username)
+int user_add(struct userdb_user *user)
 {
 	struct userMngr_Stru *user_mngr = &user_mngr_unit;
-	struct userdb_user userInfo;
+	int ret;
+
+	ret = userdb_write(user_mngr->userdb, user);
+
+    printf("%s: id=%d, name: %s\n", __FUNCTION__, user->id, user->name);
+
+	return ret;
+}
+
+int user_delete(char *username)
+{
+	struct userMngr_Stru *user_mngr = &user_mngr_unit;
+	struct userdb_user user;
 	char dir_name[64];
-	int i, ret;
+	int ret;
 
-	for(i=0; i<userCnt; i++)
+	ret = userdb_read_byName(user_mngr->userdb, username, &user);
+	if(ret != 0)
 	{
-		ret = userdb_read_byName(user_mngr->userdb, username+i*USER_NAME_LEN, &userInfo);
-		if(ret != 0)
-		{
-			continue;
-		}
-
-		memset(dir_name, 0, sizeof(dir_name));
-		sprintf(dir_name, "%s/%d_%s", FACES_DATABASE_PATH, userInfo.id, userInfo.name);
-		remove_dir(dir_name);
+		return 0;
 	}
+	userdb_delete_byName(user_mngr->userdb, username);
+
+	/* remove face images */
+	memset(dir_name, 0, sizeof(dir_name));
+	sprintf(dir_name, "%s/%d_%s", FACES_DATABASE_PATH, user.id, user.name);
+	remove_dir(dir_name);
+    printf("%s: name: %s\n", __FUNCTION__, username);
 
 	return 0;
 }
@@ -174,6 +186,8 @@ int user_mngr_init(void)
     struct userdb_user user;
     int total, cursor = 0;
     int i, ret;
+
+	memset(user_mngr, 0, sizeof(struct userMngr_Stru));
 
 	userdb_init(&user_mngr->userdb);
 

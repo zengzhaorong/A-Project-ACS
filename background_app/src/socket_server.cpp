@@ -141,8 +141,7 @@ int client_0x06_deleteUser(struct clientInfo *client, uint8_t *data, int len, ui
 	{
 		memcpy(username, data +tmplen, USER_NAME_LEN);
 		//printf("[%d]name: %s\n", i, username);
-		user_delete_faceimg(1, username);
-		userdb_delete_byName(user_mngr_unit.userdb, username);
+		user_delete(username);
 		tmplen += USER_NAME_LEN;
 	}
 
