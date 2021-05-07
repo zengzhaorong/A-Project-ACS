@@ -21,8 +21,8 @@ extern "C" {
 using namespace cv;
 using namespace std;
 
-#define FACES_DATABASE_PATH		"faces"
-#define FACES_DB_CSV_FILE			(FACES_DATABASE_PATH"/""faces.csv")
+#define FACES_IMAGES_PATH		"faces"
+#define FACES_DB_CSV_FILE			(FACES_IMAGES_PATH"/""faces.csv")
 
 
 struct userMngr_Stru
