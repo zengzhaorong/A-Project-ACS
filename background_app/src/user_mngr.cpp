@@ -60,12 +60,12 @@ int remove_dir(const char *dir)
     return 0;
 }
 
-int user_add(struct userdb_user *user)
+int user_add(struct db_userinfo *user)
 {
 	struct userMngr_Stru *user_mngr = &user_mngr_unit;
 	int ret;
 
-	ret = userdb_write(user_mngr->userdb, user);
+	ret = db_user_write(user_mngr->userdb, user);
 
     printf("%s: id=%d, name: %s\n", __FUNCTION__, user->id, user->name);
 
@@ -75,16 +75,16 @@ int user_add(struct userdb_user *user)
 int user_delete(char *username)
 {
 	struct userMngr_Stru *user_mngr = &user_mngr_unit;
-	struct userdb_user user;
+	struct db_userinfo user;
 	char dir_name[64];
 	int ret;
 
-	ret = userdb_read_byName(user_mngr->userdb, username, &user);
+	ret = db_user_read_byName(user_mngr->userdb, username, &user);
 	if(ret != 0)
 	{
 		return 0;
 	}
-	userdb_delete_byName(user_mngr->userdb, username);
+	db_user_delete_byName(user_mngr->userdb, username);
 
 	/* remove face images */
 	memset(dir_name, 0, sizeof(dir_name));
@@ -99,15 +99,15 @@ int user_delete(char *username)
 int user_get_faceimg_label(vector<Mat>& images, vector<int>& labels) 
 {
     struct userMngr_Stru *usr_mngr = &user_mngr_unit;
-    struct userdb_user user;
+    struct db_userinfo user;
 	string img_path;
     int total, cursor = 0;
     int i, j, ret;
 
-    total = userdb_get_total(usr_mngr->userdb);
+    total = db_user_get_total(usr_mngr->userdb);
     for(i=0; i<total +1; i++)
 	{
-        ret = userdb_traverse_user(usr_mngr->userdb, &cursor, &user);
+        ret = db_user_traverse_user(usr_mngr->userdb, &cursor, &user);
         if(ret != 0)
             break;
 		
@@ -183,7 +183,7 @@ int user_create_dir(char *base_dir, int id, char *usr_name, char *usr_dir)
 int user_mngr_init(void)
 {
 	struct userMngr_Stru *user_mngr = &user_mngr_unit;
-    struct userdb_user user;
+    struct db_userinfo user;
     int total, cursor = 0;
     int i, ret;
 
@@ -192,10 +192,10 @@ int user_mngr_init(void)
 	userdb_init(&user_mngr->userdb);
 
 	/* list all user */
-    total = userdb_get_total(user_mngr->userdb);
+    total = db_user_get_total(user_mngr->userdb);
     for(i=0; i<total +1; i++)
     {
-        ret = userdb_traverse_user(user_mngr->userdb, &cursor, &user);
+        ret = db_user_traverse_user(user_mngr->userdb, &cursor, &user);
         if(ret != 0)
             break;
 

@@ -6,17 +6,17 @@
 
 
 /* asynchronous read */
-int userdb_write(sqlite3 *db, struct userdb_user *user)
+int db_user_write(sqlite3 *db, struct db_userinfo *user)
 {
     char sql_cmd[256] = {0};
     char *errMsg = NULL;
     int ret;
 
     /* check user if exist or not */
-    ret = userdb_check_user_exist(db, user->id);
+    ret = db_user_check_exist(db, user->id);
     if(ret == 0)    // exist
     {
-        ret = userdb_update(db, user);
+        ret = db_user_update(db, user);
     }
     else
     {
@@ -35,7 +35,7 @@ int userdb_write(sqlite3 *db, struct userdb_user *user)
     return 0;
 }
 
-int userdb_update(sqlite3 *db, struct userdb_user *user)
+int db_user_update(sqlite3 *db, struct db_userinfo *user)
 {
     char sql_cmd[256] = {0};
     char *errMsg = NULL;
@@ -55,7 +55,7 @@ int userdb_update(sqlite3 *db, struct userdb_user *user)
 }
 
 /* synchronous read */
-int userdb_read_byId(sqlite3 *db, int id, struct userdb_user *user)
+int db_user_read_byId(sqlite3 *db, int id, struct db_userinfo *user)
 {
 	sqlite3_stmt *pStmt;
     char sql_cmd[128] = {0};
@@ -86,7 +86,7 @@ int userdb_read_byId(sqlite3 *db, int id, struct userdb_user *user)
 }
 
 /* synchronous read */
-int userdb_read_byName(sqlite3 *db, char *name, struct userdb_user *user)
+int db_user_read_byName(sqlite3 *db, char *name, struct db_userinfo *user)
 {
 	sqlite3_stmt *pStmt;
     char sql_cmd[128] = {0};
@@ -117,7 +117,7 @@ int userdb_read_byName(sqlite3 *db, char *name, struct userdb_user *user)
 }
 
 /* asynchronous delete */
-int userdb_delete_byId(sqlite3 *db, int id)
+int db_user_delete_byId(sqlite3 *db, int id)
 {
     char sql_cmd[128] = {0};
     char *errMsg = NULL;
@@ -136,7 +136,7 @@ int userdb_delete_byId(sqlite3 *db, int id)
 }
 
 /* asynchronous delete */
-int userdb_delete_byName(sqlite3 *db, char *name)
+int db_user_delete_byName(sqlite3 *db, char *name)
 {
     char sql_cmd[128] = {0};
     char *errMsg = NULL;
@@ -154,7 +154,7 @@ int userdb_delete_byName(sqlite3 *db, char *name)
     return 0;
 }
 
-int userdb_get_total(sqlite3 *db)
+int db_user_get_total(sqlite3 *db)
 {
 	sqlite3_stmt *pStmt;
     char sql_cmd[128] = {0};
@@ -180,7 +180,7 @@ int userdb_get_total(sqlite3 *db)
     return total;
 }
 
-int userdb_traverse_user(sqlite3 *db, int *cursor, struct userdb_user *user)
+int db_user_traverse_user(sqlite3 *db, int *cursor, struct db_userinfo *user)
 {
 	static sqlite3_stmt *pStmt;
     char sql_cmd[128] = {0};
@@ -217,20 +217,37 @@ int userdb_traverse_user(sqlite3 *db, int *cursor, struct userdb_user *user)
     return ret;
 }
 
-int userdb_check_user_exist(sqlite3 *db, int id)
+int db_user_check_exist(sqlite3 *db, int id)
 {
-    struct userdb_user userInfo;
+    struct db_userinfo userInfo;
     int ret;
 
-    ret = userdb_read_byId(db, id, &userInfo);
+    ret = db_user_read_byId(db, id, &userInfo);
 
     return ret;
 }
 
-int userdb_init(sqlite3 **ppdb)
+int db_user_creat_tbl(sqlite3 *db, char *tbl_name)
 {
     char sql_cmd[256] = {0};
     char *errMsg = NULL;
+    int ret;
+
+    /* create db table if not exist */
+	sprintf(sql_cmd, "CREATE TABLE IF NOT EXISTS %s(%s INT PRIMARY KEY NOT NULL, %s CHAR(%d) NOT NULL, %s TEXT);", \
+					tbl_name, USERDB_COL_ID, USERDB_COL_NAME, USER_NAME_LEN, USERDB_COL_FACEPATH);
+    //printf("%s: cmd: %s\n", __FUNCTION__, sql_cmd);
+    ret = sqlite3_exec(db, sql_cmd, NULL, NULL, &errMsg);
+    if(ret != SQLITE_OK)    // may be already exist
+    {
+        printf("%s: %s\n", __FUNCTION__, sqlite3_errmsg(db));
+    }
+
+    return 0;
+}
+
+int userdb_init(sqlite3 **ppdb)
+{
     int ret;
 
     /* open or create database */
@@ -240,17 +257,10 @@ int userdb_init(sqlite3 **ppdb)
         printf("%s: Can't open database: %s\n", __FUNCTION__, sqlite3_errmsg(*ppdb));
         return -1;
     }
-
-    /* create db table */
-	sprintf(sql_cmd, "CREATE TABLE IF NOT EXISTS  %s(%s INT PRIMARY KEY NOT NULL, %s CHAR(%d) NOT NULL, %s TEXT);", \
-					USERDB_TABLE, USERDB_COL_ID, USERDB_COL_NAME, USER_NAME_LEN, USERDB_COL_FACEPATH);
-    //printf("%s: cmd: %s\n", __FUNCTION__, sql_cmd);
-    ret = sqlite3_exec(*ppdb, sql_cmd, NULL, NULL, &errMsg);
-    if(ret != SQLITE_OK)    // may be already exist
-    {
-        printf("%s: %s\n", __FUNCTION__, sqlite3_errmsg(*ppdb));
-    }
     
+    /* create user information table */
+    db_user_creat_tbl(*ppdb, USERDB_TABLE);
+
     printf("%s: successfully.\n", __FUNCTION__);
 
     return 0;

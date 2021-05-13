@@ -320,7 +320,7 @@ int opencv_face_detect( Mat& img, CascadeClassifier& cascade,
 void *opencv_face_detect_thread(void *arg)
 {
 	class face_detect *detect_unit = &face_detect_unit;
-	struct userdb_user user;
+	struct db_userinfo user;
 	int socket_handle = -1;
 	vector<Rect> faces;
 	QImage qImage;
@@ -415,7 +415,7 @@ void *opencv_face_detect_thread(void *arg)
 					proto_0x04_switchWorkSta(socket_handle, WORK_STA_NORMAL, NULL);
 					proto_0x05_addUser(socket_handle, 1, user_mngr_unit.newid, user_mngr_unit.newname);
 					/* add user to database */
-					memset(&user, 0, sizeof(struct userdb_user));
+					memset(&user, 0, sizeof(struct db_userinfo));
 					user.id = user_mngr_unit.newid;
 					memcpy(user.name, user_mngr_unit.newname, USER_NAME_LEN);
 					memcpy(user.facepath, user_mngr_unit.add_userdir, DIR_PATH_LEN);
@@ -500,7 +500,7 @@ int opencv_face_recogn(Mat &face_mat, int *face_id, uint8_t *confid, int *status
 void *opencv_face_recogn_thread(void *arg)
 {
 	class face_recogn *recogn_unit = &face_recogn_unit;
-	struct userdb_user userInfo;
+	struct db_userinfo userInfo;
 	Mat face_mat;
 	int face_id;
 	uint8_t confidence;
@@ -530,7 +530,7 @@ void *opencv_face_recogn_thread(void *arg)
 		ret = opencv_face_recogn(face_mat, &face_id, &confidence, &status);
 		if(ret == 0)
 		{
-			userdb_read_byId(user_mngr_unit.userdb , face_id, &userInfo);
+			db_user_read_byId(user_mngr_unit.userdb , face_id, &userInfo);
 			proto_0x12_sendFaceRecogn(main_mngr.user_handle, face_id, confidence, userInfo.name, status);
 			sleep(CONFIG_FACE_RECOINTERVAL(main_mngr.config_ini)/1000 +1);	// more 1 second
 		}

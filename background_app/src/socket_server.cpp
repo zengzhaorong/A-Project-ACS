@@ -153,7 +153,7 @@ int client_0x06_deleteUser(struct clientInfo *client, uint8_t *data, int len, ui
 
 int server_0x07_getUserList(struct clientInfo *client, uint8_t *data, int len, uint8_t *ack_data, int size, int *ack_len)
 {
-	struct userdb_user userInfo;
+	struct db_userinfo userInfo;
 	int userCnt = 0;
 	int cursor = 0;
 	int tmplen = 0;
@@ -170,14 +170,14 @@ int server_0x07_getUserList(struct clientInfo *client, uint8_t *data, int len, u
 	tmplen += 4;
 	
 	/* user count */
-	userCnt = userdb_get_total(user_mngr_unit.userdb);
+	userCnt = db_user_get_total(user_mngr_unit.userdb);
 	memcpy(ack_data +tmplen, &userCnt, 4);
 	tmplen += 4;
 
 	/* user name */
 	for(i=0; i<userCnt +1; i++)
 	{
-		ret = userdb_traverse_user(user_mngr_unit.userdb, &cursor, &userInfo);
+		ret = db_user_traverse_user(user_mngr_unit.userdb, &cursor, &userInfo);
 		if(ret == -1)
 			break;
 		memcpy(ack_data +tmplen, userInfo.name, 32);
