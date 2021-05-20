@@ -61,10 +61,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 
 	/* clock */
 	y_pix += Y_INTERV_PIXEL_EX;
-	widget_height = 40;
+	widget_height = 90;
 	clockLabel = new QLabel(mainWindow);
 	clockLabel->setWordWrap(true);	// adapt to text, can show multi row
-	clockLabel->setGeometry(FUNC_AREA_PIXEL_X +5, 0, funcArea_width, widget_height);	// height: set more bigger to adapt to arm
+	clockLabel->setGeometry(FUNC_AREA_PIXEL_X +5, y_pix, funcArea_width, widget_height);	// height: set more bigger to adapt to arm
 	clockLabel->show();
 	y_pix += widget_height;
 
