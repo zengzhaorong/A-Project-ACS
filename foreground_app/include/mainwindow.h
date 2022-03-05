@@ -48,6 +48,9 @@ extern "C" {
 #define TEXT_RECOGN_SUCCESS		"识别成功"			// "识别成功"、"签到成功"、"欢迎回家"
 #define TEXT_ADD_USER			"添加用户"
 #define TEXT_DEL_USER			"删除用户"
+#define TEXT_HIST_REC			"历史记录"
+#define TEXT_SAVE				"保存"
+#define TEXT_RESET				"重置"
 #define TEXT_SWIT_CAPTURE		"切换画面"
 
 
@@ -71,6 +74,9 @@ private slots:
 	void showMainwindow(void);
 	void addUser(void);
 	void deleteUser(void);
+	void showHistRecord(void);
+	void saveRecord(void);
+	void resetRecord(void);
 	void switchCapture(void);
 	void textOnVideo_show_over(void);
 	
@@ -89,6 +95,9 @@ private:
 	QLineEdit		*userNameEdit;		// edit add user name
 	QPushButton 	*addUserBtn;		// add user button
 	QPushButton 	*delUserBtn;		// delete user button
+	QPushButton 	*showHistRecordBtn;	// show history record button
+	QPushButton 	*saveRecordBtn;		// save record button
+	QPushButton 	*resetRecordBtn;		// delete record button
 	QPushButton 	*switchCaptureBtn;		// switch capture button
 	unsigned char 	*video_buf;
 	unsigned int 	buf_size;
@@ -98,7 +107,7 @@ public:
 	QLabel 			*textOnVideo;		// text show on video
 	QTimer 			*tmpShowTimer;		// control temple show, few second
 	QTableView		*tableView;
-	QStandardItemModel *userModel;
+	QStandardItemModel *listModel;
 	QRect 			face_rects;			// face rectangles
 	int 			face_id;
 	char 			userRecogn[USER_NAME_LEN];
@@ -110,8 +119,11 @@ public:
 };
 
 
-int mainwin_set_rects(int x, int y, int w, int h);
 int mainwin_set_userList(int flag, int userCnt, char *usr_name);
+int mainwin_set_recordList(uint32_t time, int id, char *usr_name, int confid);
+void mainwin_clear_recordList(void);
+
+int mainwin_set_rects(int x, int y, int w, int h);
 int mainwin_set_recognInfo(int id, uint8_t confid, char *usr_name, int status);
 
 int start_mainwindow_task(void);

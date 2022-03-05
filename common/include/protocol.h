@@ -69,6 +69,9 @@ int proto_0x12_sendFaceRecogn(int handle, int face_id, uint8_t confid, char *fac
 int proto_0x20_switchCapture(int handle, int flag);
 int proto_0x21_sendCaptureFrame(int handle, int format, void *frame, int len);
 
+int proto_0x40_getRecordList(int handle);
+int proto_0x41_recordListCtrl(int handle, uint32_t cmd, void *arg);
+
 int proto_makeupPacket(uint8_t seq, uint8_t cmd, int len, uint8_t *data, \
 								uint8_t *outbuf, int size, int *outlen);
 int proto_analyPacket(uint8_t *pack, int packLen, uint8_t *seq, \

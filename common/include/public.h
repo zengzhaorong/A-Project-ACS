@@ -23,6 +23,8 @@
 #define TEXT_USER_ID			"编号"
 #define TEXT_USER_NAME			"姓名"
 #define TEXT_STATUS				"状态"
+#define TEXT_TIME				"时间"
+#define TEXT_CONFID				"置信度"
 
 #define FRAME_BUF_SIZE		(CONFIG_CAPTURE_WIDTH(main_mngr.config_ini) *CONFIG_CAPTURE_HEIGH(main_mngr.config_ini) *3)
 

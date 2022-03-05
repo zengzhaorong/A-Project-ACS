@@ -501,6 +501,7 @@ void *opencv_face_recogn_thread(void *arg)
 {
 	class face_recogn *recogn_unit = &face_recogn_unit;
 	struct db_userinfo userInfo;
+	struct db_recognRecord recorec;
 	Mat face_mat;
 	int face_id;
 	uint8_t confidence;
@@ -531,6 +532,11 @@ void *opencv_face_recogn_thread(void *arg)
 		if(ret == 0)
 		{
 			db_user_read_byId(user_mngr_unit.userdb , face_id, &userInfo);
+			recorec.time = time(NULL);
+			recorec.id = userInfo.id;
+			recorec.confid =  confidence;
+			memcpy(recorec.name, userInfo.name, USER_NAME_LEN);
+			db_recorec_write(user_mngr_unit.userdb, &recorec);
 			proto_0x12_sendFaceRecogn(main_mngr.user_handle, face_id, confidence, userInfo.name, status);
 			sleep(CONFIG_FACE_RECOINTERVAL(main_mngr.config_ini)/1000 +1);	// more 1 second
 		}

@@ -304,6 +304,44 @@ int client_0x21_sendCaptureFrame(struct clientInfo *client, uint8_t *data, int l
 	return 0;
 }
 
+int client_0x40_getRecordList(struct clientInfo *client, uint8_t *data, int len, uint8_t *ack_data, int size, int *ack_len)
+{
+	char user_name[USER_NAME_LEN] = {0};
+	int user_id;
+	uint32_t time;
+	int confid;
+	int count = 0;
+	int tmplen = 0;
+	int ret;
+	int i;
+
+	/* return value */
+	memcpy(&ret, data, 4);
+	tmplen += 4;
+
+	/* count */
+	memcpy(&count, data +tmplen, 4);
+	tmplen += 4;
+
+	printf("getRecordList: count = %d\n", count);
+	for(i=0; i<count; i++)
+	{
+		memcpy(&time, data +tmplen, 4);
+		tmplen += 4;
+		memcpy(&user_id, data +tmplen, 4);
+		tmplen += 4;
+		memcpy(user_name, data +tmplen, USER_NAME_LEN);
+		tmplen += USER_NAME_LEN;
+		memcpy(&confid, data +tmplen, 4);
+		tmplen += 4;
+		printf("%s: time: %d, id: %d, name: %s, confid=%d\n", __FUNCTION__, time, user_id, user_name, confid);
+		mainwin_set_recordList(time, user_id, user_name, confid);
+	}
+
+	return 0;
+}
+
+
 int client_init(struct clientInfo *client, char *srv_ip, int srv_port)
 {
 	int flags = 0;
@@ -469,6 +507,10 @@ int client_protoAnaly(struct clientInfo *client, uint8_t *pack, uint32_t pack_le
 			ret = client_0x21_sendCaptureFrame(client, data, data_len, ack_buf, PROTO_PACK_MAX_LEN, &ack_len);
 			break;
 #endif
+
+		case 0x40:
+			ret = client_0x40_getRecordList(client, data, data_len, ack_buf, PROTO_PACK_MAX_LEN, &ack_len);
+			break;
 
 		default:
 			printf("ERROR: protocol cmd[0x%02x] not exist!\n", cmd);

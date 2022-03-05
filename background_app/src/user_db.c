@@ -246,6 +246,111 @@ int db_user_creat_tbl(sqlite3 *db, char *tbl_name)
     return 0;
 }
 
+
+/*----------------------------- user information table --------------------------------*/
+/*-------------------------------------------------------------------------------------*/
+/*----------------------------- recognize record table ---------------------------------*/
+
+
+int db_recorec_write(sqlite3 *db, struct db_recognRecord *recorec)
+{
+    char sql_cmd[256] = {0};
+    char *errMsg = NULL;
+    int ret;
+
+    sprintf(sql_cmd, "INSERT INTO %s(%s, %s, %s, %s) VALUES(%d, %d, '%s', %d);", \
+                    USERDB_RECOREC_TABLE, USERDB_COL_TIME, USERDB_COL_ID, USERDB_COL_NAME, USERDB_COL_CONFID, \
+                    recorec->time, recorec->id, recorec->name, recorec->confid);
+    ret = sqlite3_exec(db, sql_cmd, NULL, NULL, &errMsg);
+    if(ret != SQLITE_OK)    // may be already exist
+    {
+        printf("%s: failed: %s\n", __FUNCTION__, sqlite3_errmsg(db));
+        return -1;
+    }
+
+    printf("%s: id=%d, name: %s, time: %d\n", __FUNCTION__, recorec->id, recorec->name, recorec->time);
+
+    return 0;
+}
+
+/* delete all record: delete table and then creat again */
+int db_recorec_delete_all(sqlite3 *db)
+{
+    char sql_cmd[256] = {0};
+    char *errMsg = NULL;
+    int ret;
+
+    /* delete table */
+	sprintf(sql_cmd, "DROP TABLE %s;", USERDB_RECOREC_TABLE);
+    ret = sqlite3_exec(db, sql_cmd, NULL, NULL, &errMsg);
+    if(ret != SQLITE_OK)    // may be already exist
+    {
+        printf("%s: %s\n", __FUNCTION__, sqlite3_errmsg(db));
+    }
+
+    db_recorec_creat_tbl(db, USERDB_RECOREC_TABLE);
+
+    printf("%s: drop table [%s]\n", __FUNCTION__, USERDB_RECOREC_TABLE);
+
+    return 0;
+}
+
+int db_recorec_traverse_user(sqlite3 *db, int *cursor, struct db_recognRecord *recorec)
+{
+	static sqlite3_stmt *pStmt;
+    char sql_cmd[128] = {0};
+    const char *pzTail;
+    int ret;
+
+    if(*cursor == 0)
+    {
+        sprintf(sql_cmd, "SELECT * from %s;", USERDB_RECOREC_TABLE);
+        ret = sqlite3_prepare_v2(db, sql_cmd, strlen(sql_cmd), &pStmt, &pzTail);
+        if(ret != SQLITE_OK)    // may be already exist
+        {
+            printf("%s: failed: %s\n", __FUNCTION__, sqlite3_errmsg(db));
+            return -1;
+        }
+    }
+
+    if(sqlite3_step(pStmt) == SQLITE_ROW)
+    {
+        recorec->time = sqlite3_column_int(pStmt, 0);
+		recorec->id = sqlite3_column_int(pStmt, 1);
+		strncpy(recorec->name, (const char *)sqlite3_column_text(pStmt, 2), sizeof(recorec->name));
+        recorec->confid = sqlite3_column_int(pStmt, 3);
+        (*cursor) ++;
+        ret = 0;
+    }
+    else
+    {
+        sqlite3_finalize(pStmt);
+        ret = -1;
+    }
+
+    return ret;
+}
+
+int db_recorec_creat_tbl(sqlite3 *db, char *tbl_name)
+{
+    char sql_cmd[256] = {0};
+    char *errMsg = NULL;
+    int ret;
+
+    /* create db table if not exist */
+	sprintf(sql_cmd, "CREATE TABLE IF NOT EXISTS %s(%s INT PRIMARY KEY NOT NULL, %s INT NOT NULL, %s CHAR(%d) NOT NULL, %s INT);", \
+					tbl_name, USERDB_COL_TIME, USERDB_COL_ID, USERDB_COL_NAME, USER_NAME_LEN, USERDB_COL_CONFID);
+    //printf("%s: cmd: %s\n", __FUNCTION__, sql_cmd);
+    ret = sqlite3_exec(db, sql_cmd, NULL, NULL, &errMsg);
+    if(ret != SQLITE_OK)    // may be already exist
+    {
+        printf("%s: %s\n", __FUNCTION__, sqlite3_errmsg(db));
+    }
+
+    return 0;
+}
+
+
 int userdb_init(sqlite3 **ppdb)
 {
     int ret;
@@ -260,6 +365,9 @@ int userdb_init(sqlite3 **ppdb)
     
     /* create user information table */
     db_user_creat_tbl(*ppdb, USERDB_TABLE);
+
+    /* create face recognize record table */
+    db_recorec_creat_tbl(*ppdb, USERDB_RECOREC_TABLE);
 
     printf("%s: successfully.\n", __FUNCTION__);
 

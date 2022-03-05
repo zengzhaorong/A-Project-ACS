@@ -219,6 +219,79 @@ int server_0x10_getOneFrame(struct clientInfo *client, uint8_t *data, int len, u
 	return 0;
 }
 
+int server_0x40_getRecordList(struct clientInfo *client, uint8_t *data, int len, uint8_t *ack_data, int size, int *ack_len)
+{
+	struct db_recognRecord recorec;
+	int count = 0;
+	int cursor = 0;
+	int tmplen = 0;
+	int cnt_pos = 0;
+	int ret = 0;
+
+	/* ack part */
+	tmplen = 0;
+	/* return value */
+	ret = 0;
+	memcpy(ack_data, &ret, 4);
+	tmplen += 4;
+	
+	/* count */
+	cnt_pos = tmplen;
+	tmplen += 4;
+
+	count = 0;
+	for(; ret==0; )
+	{
+		ret = db_recorec_traverse_user(user_mngr_unit.userdb, &cursor, &recorec);
+		if(ret == -1)
+			break;
+
+		memcpy(ack_data +tmplen, &recorec.time, 4);
+		tmplen += 4;
+		memcpy(ack_data +tmplen, &recorec.id, 4);
+		tmplen += 4;
+		memcpy(ack_data +tmplen, recorec.name, USER_NAME_LEN);
+		tmplen += USER_NAME_LEN;
+		memcpy(ack_data +tmplen, &recorec.confid, 4);
+		tmplen += 4;
+		//printf("%s: time=%d, user id=%d, name: %s\n", __FUNCTION__, recorec.time, recorec.id, recorec.name);
+
+		count ++;
+	}
+
+	/* update user count */
+	memcpy(ack_data +cnt_pos, &count, 4);
+
+	if(ack_len != NULL)
+		*ack_len = tmplen;
+
+	return 0;
+}
+
+int server_0x41_recordListCtrl(struct clientInfo *client, uint8_t *data, int len, uint8_t *ack_data, int size, int *ack_len)
+{
+	char filename[64] = {0};
+	uint32_t cmd;
+	int tmplen = 0;
+
+	memcpy(&cmd, data +tmplen, 4);
+	tmplen +=4;
+
+	if(cmd == 0)	// reset
+	{
+		db_recorec_delete_all(user_mngr_unit.userdb);
+	}
+	else if(cmd == 1)	// save
+	{
+		memcpy(filename, data +tmplen, 64);
+		tmplen +=64;
+
+	}
+
+	return 0;
+}
+
+
 /* transmit to other client */
 /* client: current client */
 int server_transmit_packet(struct clientInfo *client, uint8_t *data, int len)
@@ -394,6 +467,14 @@ int server_protoAnaly(struct clientInfo *client, uint8_t *pack, uint32_t pack_le
 			ret = server_transmit_packet(client, pack, pack_len);
 			break;
 
+		case 0x40:
+			ret = server_0x40_getRecordList(client, data, data_len, ack_buf, PROTO_PACK_MAX_LEN, &ack_len);
+			break;
+
+		case 0x41:
+			ret = server_0x41_recordListCtrl(client, data, data_len, ack_buf, PROTO_PACK_MAX_LEN, &ack_len);
+			break;
+
 		default:
 			printf("ERROR: protocol cmd[0x%02x] not exist!\n", cmd);
 			break;
@@ -467,7 +548,7 @@ void *socket_listen_thread(void *arg)
 	struct sockaddr_in cli_addr;
 	pthread_t tid;
 	int tmpSock, client_index;
-	int tmpLen = sizeof(struct sockaddr);
+	int tmpLen;
 	int ret;
 	int i;
 
@@ -479,8 +560,6 @@ void *socket_listen_thread(void *arg)
 
 	while(1)
 	{
-	
-		// ps: only support 1 client now
 		if(server->client_cnt >= MAX_CLIENT_NUM)
 		{
 			sleep(3);

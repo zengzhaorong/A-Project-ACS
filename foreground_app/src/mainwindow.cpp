@@ -115,14 +115,37 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 	delUserBtn->setGeometry(FUNC_AREA_PIXEL_X +30, y_pix, 100, WIDGET_HEIGHT_PIXEL);
 	y_pix += WIDGET_HEIGHT_PIXEL;
 
+	/* display history record button */
+	y_pix += Y_INTERV_PIXEL_EX;
+	showHistRecordBtn = new QPushButton(mainWindow);
+	showHistRecordBtn->setText(codec->toUnicode(TEXT_HIST_REC));
+    connect(showHistRecordBtn, SIGNAL(clicked()), this, SLOT(showHistRecord()));
+	showHistRecordBtn->setGeometry(FUNC_AREA_PIXEL_X +30, y_pix, 100, WIDGET_HEIGHT_PIXEL);
+	y_pix += WIDGET_HEIGHT_PIXEL;
+	
+	/* save record button */
+	y_pix += Y_INTERV_PIXEL_IN;
+	saveRecordBtn = new QPushButton(mainWindow);
+	saveRecordBtn->setText(codec->toUnicode(TEXT_SAVE));
+    connect(saveRecordBtn, SIGNAL(clicked()), this, SLOT(saveRecord()));
+	saveRecordBtn->setGeometry(FUNC_AREA_PIXEL_X +20, y_pix, 60, WIDGET_HEIGHT_PIXEL);
+	saveRecordBtn->hide();
+	/* delete record button */
+	resetRecordBtn = new QPushButton(mainWindow);
+	resetRecordBtn->setText(codec->toUnicode(TEXT_RESET));
+    connect(resetRecordBtn, SIGNAL(clicked()), this, SLOT(resetRecord()));
+	resetRecordBtn->setGeometry(FUNC_AREA_PIXEL_X +20 +60 +3, y_pix, 60, WIDGET_HEIGHT_PIXEL);
+	resetRecordBtn->hide();
+	y_pix += WIDGET_HEIGHT_PIXEL;
+
 	tableView = new QTableView(mainWindow);
-	userModel = new QStandardItemModel();
-	userModel->setHorizontalHeaderLabels({"ID", "Name", "Time", "Status"});
+	listModel = new QStandardItemModel();
 	tableView->setSelectionBehavior(QAbstractItemView::SelectRows);		// set select the whole row 
 	//tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);	// adapt to table veiw
 	tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents );	// adapt to text
 	tableView->setGeometry(0, 0, CONFIG_CAPTURE_WIDTH(main_mngr.config_ini), CONFIG_CAPTURE_HEIGH(main_mngr.config_ini));
 	tableView->hide();
+	
 #endif
 
 #if !defined(USER_CLIENT_ENABLE) && defined(MANAGER_CLIENT_ENABLE)
@@ -317,6 +340,51 @@ void MainWindow::deleteUser(void)
 		
 }
 
+void MainWindow::showHistRecord(void)
+{
+	static bool showflag = 0;
+	
+	showflag = !showflag;
+
+	if(showflag == 1)
+	{
+		/* get record list */
+		proto_0x40_getRecordList(main_mngr.mngr_handle);
+		mainwin_clear_recordList();
+
+		tableView->setModel(listModel);
+		saveRecordBtn->show();
+		resetRecordBtn->show();
+		tableView->show();
+	}
+	else
+	{
+		saveRecordBtn->hide();
+		resetRecordBtn->hide();
+		tableView->hide();
+	}
+
+}
+
+void MainWindow::saveRecord(void)
+{
+	printf("%s: enter ++\n", __FUNCTION__);
+}
+
+void MainWindow::resetRecord(void)
+{
+	QTextCodec *codec = QTextCodec::codecForName("GBK");
+
+	if(QMessageBox::warning(this,"Warning", "reset record list ?",QMessageBox::Yes,QMessageBox::No)==QMessageBox::No)
+	{
+		return ;
+	}
+
+	proto_0x41_recordListCtrl(main_mngr.mngr_handle, 0, NULL);	// reset
+
+	mainwin_clear_recordList();
+}
+
 void MainWindow::switchCapture(void)
 {
 
@@ -466,6 +534,46 @@ int mainwin_set_recognInfo(int id, uint8_t confid, char *usr_name, int status)
 	mainwindow->face_status = status;
 
 	return 0;
+}
+
+/* set record info */
+int mainwin_set_recordList(uint32_t time, int id, char *usr_name, int confid)
+{
+	struct tm *ptm;
+	time_t tmpTime = time;
+	char time_str[64] = {0};
+	char id_str[8] = {0};
+	char confid_str[8] = {0};
+	int modelRowCnt = 0;
+
+	ptm = localtime(&tmpTime);
+	sprintf(time_str, "%04d-%02d-%02d %02d:%02d:%02d", 1900+ptm->tm_year, ptm->tm_mon, ptm->tm_mday, ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
+
+	sprintf(id_str, "%d", id);
+	sprintf(confid_str, "%d%c", confid, '%');
+
+	modelRowCnt = mainwindow->listModel->rowCount();
+	mainwindow->listModel->setItem(modelRowCnt, 0, new QStandardItem(QString("%1").arg(time_str)));
+	mainwindow->listModel->setItem(modelRowCnt, 1, new QStandardItem(QString("%1").arg(id_str)));
+	mainwindow->listModel->setItem(modelRowCnt, 2, new QStandardItem(QString("%1").arg(usr_name)));
+	mainwindow->listModel->setItem(modelRowCnt, 3, new QStandardItem(QString("%1").arg(confid_str)));
+
+	/* set item align center */
+	mainwindow->listModel->item(modelRowCnt, 0)->setTextAlignment(Qt::AlignCenter);
+	mainwindow->listModel->item(modelRowCnt, 1)->setTextAlignment(Qt::AlignCenter);
+	mainwindow->listModel->item(modelRowCnt, 2)->setTextAlignment(Qt::AlignCenter);
+	mainwindow->listModel->item(modelRowCnt, 3)->setTextAlignment(Qt::AlignCenter);
+
+	return 0;
+}
+
+void mainwin_clear_recordList(void)
+{
+	QTextCodec *codec = QTextCodec::codecForName("GBK");
+
+	mainwindow->listModel->clear();
+	mainwindow->listModel->setHorizontalHeaderLabels({codec->toUnicode(TEXT_TIME), codec->toUnicode(TEXT_USER_ID), \
+														codec->toUnicode(TEXT_USER_NAME), codec->toUnicode(TEXT_CONFID)});
 }
 
 
