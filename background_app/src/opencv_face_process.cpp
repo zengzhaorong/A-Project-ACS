@@ -32,7 +32,7 @@ class face_recogn face_recogn_unit;
 
 
 static uint8_t *detect_buf = NULL;
-
+static int detect_buf_len = 0;
 
 face_detect::face_detect(void)
 {
@@ -126,13 +126,15 @@ void face_recogn::face_recogn_deinit(void)
 int opencv_put_frame_detect(uint8_t *buf, int len)
 {
 	int value = 0;
-	int tmpLen;
 
 	if(buf==NULL || len<=0)
 		return -1;
 
-	tmpLen = (len>(int)FRAME_BUF_SIZE ? (int)FRAME_BUF_SIZE:len);
-	memcpy(detect_buf, buf, tmpLen);
+	if(len > (int)FRAME_BUF_SIZE)
+		return -1;
+
+	memcpy(detect_buf, buf, len);
+	detect_buf_len = len;
 
 	sem_getvalue(&face_detect_unit.detect_sem, &value);
 
@@ -146,7 +148,6 @@ int opencv_put_frame_detect(uint8_t *buf, int len)
 int opencv_get_frame_detect(uint8_t *buf, int size)
 {
 	struct timespec ts;
-	int tmpLen;
 	int ret;
 
 	if(buf == NULL)
@@ -163,11 +164,12 @@ int opencv_get_frame_detect(uint8_t *buf, int size)
 	if(ret != 0)
 		return -1;
 
-	tmpLen = (size>(int)FRAME_BUF_SIZE ? (int)FRAME_BUF_SIZE:size);
+	if(size < detect_buf_len)
+		return -1;
 
-	memcpy(buf, detect_buf, tmpLen);
+	memcpy(buf, detect_buf, detect_buf_len);
 
-	return tmpLen;
+	return detect_buf_len;
 }
 
 /* put frame to recognize buffer */
