@@ -84,16 +84,17 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 
 #ifdef MANAGER_CLIENT_ENABLE
 
-	/* user id - name edit */
+	/* user id edit - 用户ID输入框 */
 	y_pix += Y_INTERV_PIXEL_EX;
 	userIdEdit = new QLineEdit(mainWindow);
 	userIdEdit->setPlaceholderText(codec->toUnicode(TEXT_USER_ID));
 	userIdEdit->setGeometry(FUNC_AREA_PIXEL_X +5, y_pix, 50, WIDGET_HEIGHT_PIXEL);
+	/* user name edit - 用户名输入框 */
 	userNameEdit = new QLineEdit(mainWindow);
 	userNameEdit->setPlaceholderText(codec->toUnicode(TEXT_USER_NAME));
 	userNameEdit->setGeometry(FUNC_AREA_PIXEL_X +5 +50 +2, y_pix, 100, WIDGET_HEIGHT_PIXEL);
 	y_pix += WIDGET_HEIGHT_PIXEL;
-	/* add user button */
+	/* add user button - 添加用户按钮 */
 	y_pix += Y_INTERV_PIXEL_IN;
 	addUserBtn = new QPushButton(mainWindow);
 	addUserBtn->setText(codec->toUnicode(TEXT_ADD_USER));
@@ -101,13 +102,13 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 	addUserBtn->setGeometry(FUNC_AREA_PIXEL_X +30, y_pix, 100, WIDGET_HEIGHT_PIXEL);
 	y_pix += WIDGET_HEIGHT_PIXEL;
 
-	/* user list box */
+	/* user list box - 用户列表下拉菜单栏*/
 	y_pix += Y_INTERV_PIXEL_EX;
 	userListBox = new QComboBox(mainWindow);
 	userListBox->setGeometry(FUNC_AREA_PIXEL_X +5, y_pix, 150, WIDGET_HEIGHT_PIXEL);
 	userListBox->setEditable(true);
 	y_pix += WIDGET_HEIGHT_PIXEL;
-	/* delete user button */
+	/* delete user button - 删除用户按钮*/
 	y_pix += Y_INTERV_PIXEL_IN;
 	delUserBtn = new QPushButton(mainWindow);
 	delUserBtn->setText(codec->toUnicode(TEXT_DEL_USER));
@@ -147,6 +148,12 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 	tableView->hide();
 	
 #endif
+
+	y_pix += Y_INTERV_PIXEL_IN;
+	takePhotoBtn = new QPushButton(mainWindow);
+	takePhotoBtn->setText(codec->toUnicode(TEXT_TAKE_PHOTO));
+    connect(takePhotoBtn, SIGNAL(clicked()), this, SLOT(takePhoto()));
+	takePhotoBtn->setGeometry(FUNC_AREA_PIXEL_X +30, y_pix, 100, WIDGET_HEIGHT_PIXEL);
 
 #if !defined(USER_CLIENT_ENABLE) && defined(MANAGER_CLIENT_ENABLE)
 	switchCaptureBtn = new QPushButton(mainWindow);
@@ -189,8 +196,8 @@ void MainWindow::showMainwindow(void)
 	timer->stop();
 
 	QDateTime time = QDateTime::currentDateTime();
-	QString str = time.toString("yyyy-MM-dd hh:mm:ss dddd");
-	clockLabel->setText(str);
+	QString strDate = time.toString("yyyy-MM-dd hh:mm:ss dddd");
+	clockLabel->setText(strDate);
 
 	/* show capture image */
 	ret = capture_get_newframe(video_buf, buf_size, &len);
@@ -199,6 +206,25 @@ void MainWindow::showMainwindow(void)
 		QImage videoQImage;
 
 		videoQImage = jpeg_to_QImage(video_buf, len);
+
+		// 拍照保存图片
+		if(takePhotoFlag)
+		{
+			QString strTime = time.toString("yyMMddhhmmss");
+			char file_name[64]={0};
+			QByteArray ba;
+        	ba = strTime.toLatin1();
+			sprintf(file_name, "%s.jpg",ba.data());
+
+			takePhotoFlag = 0;
+			FILE *file = fopen(file_name,"wb+");
+			if(file != NULL)
+			{
+				ret = fwrite(video_buf, 1, len, file);
+				printf("save file: %s\n", file_name);
+				fclose(file);
+			}
+		}
 
 		/* draw face rectangles */
 		drawFaceRectangle(videoQImage);
@@ -373,7 +399,6 @@ void MainWindow::saveRecord(void)
 
 void MainWindow::resetRecord(void)
 {
-	QTextCodec *codec = QTextCodec::codecForName("GBK");
 
 	if(QMessageBox::warning(this,"Warning", "reset record list ?",QMessageBox::Yes,QMessageBox::No)==QMessageBox::No)
 	{
@@ -383,6 +408,11 @@ void MainWindow::resetRecord(void)
 	proto_0x41_recordListCtrl(main_mngr.mngr_handle, 0, NULL);	// reset
 
 	mainwin_clear_recordList();
+}
+
+void MainWindow::takePhoto(void)
+{
+	takePhotoFlag = 1;
 }
 
 void MainWindow::switchCapture(void)

@@ -51,6 +51,7 @@ extern "C" {
 #define TEXT_HIST_REC			"历史记录"
 #define TEXT_SAVE				"保存"
 #define TEXT_RESET				"重置"
+#define TEXT_TAKE_PHOTO			"拍照"
 #define TEXT_SWIT_CAPTURE		"切换画面"
 
 
@@ -77,6 +78,7 @@ private slots:
 	void showHistRecord(void);
 	void saveRecord(void);
 	void resetRecord(void);
+	void takePhoto(void);
 	void switchCapture(void);
 	void textOnVideo_show_over(void);
 	
@@ -97,8 +99,9 @@ private:
 	QPushButton 	*delUserBtn;		// delete user button
 	QPushButton 	*showHistRecordBtn;	// show history record button
 	QPushButton 	*saveRecordBtn;		// save record button
-	QPushButton 	*resetRecordBtn;		// delete record button
-	QPushButton 	*switchCaptureBtn;		// switch capture button
+	QPushButton 	*resetRecordBtn;	// delete record button
+	QPushButton 	*takePhotoBtn;		// take photo button
+	QPushButton 	*switchCaptureBtn;	// switch capture button
 	unsigned char 	*video_buf;
 	unsigned int 	buf_size;
 	
@@ -116,6 +119,7 @@ public:
 	workstate_e		*sys_state;			// is system work state (main_mngr.work_state)
 	int 			mainwin_mode;
 	int 			stateTick;			// 
+	int				takePhotoFlag;
 };
 
 

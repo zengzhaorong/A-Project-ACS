@@ -35,6 +35,7 @@ int capture_init(struct v4l2cap_info *capture)
 
 	memset(capture, 0, sizeof(struct v4l2cap_info));
 
+	/* 打开摄像头，open("/dev/video0", O_RDWR) */
 	capture->fd = open(CONFIG_CAPTURE_DEV(main_mngr.config_ini), O_RDWR);
 	if(capture->fd < 0)
 	{
@@ -44,7 +45,7 @@ int capture_init(struct v4l2cap_info *capture)
 	}
 	printf("open video dev [%s] successfully .\n", CONFIG_CAPTURE_DEV(main_mngr.config_ini));
 
-	/* get supported format */
+	/* 获取摄像头所支持的格式 - get supported format */
 	memset(&fmtdesc, 0, sizeof(struct v4l2_fmtdesc));
 	fmtdesc.index = 0;
 	fmtdesc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -57,10 +58,10 @@ int capture_init(struct v4l2cap_info *capture)
 		}
 	}while(ret == 0);
 
-	/* try the capture format */
+	/* 尝试配置摄像头格式，测试是否支持某种格式 - try the capture format */
 	for(i=0; i<sizeof(v4l2_fmt)/sizeof(int); i++)
 	{
-		/* configure video format */
+		/* 配置摄像头格式 - configure video format */
 		memset(&format, 0, sizeof(struct v4l2_format));
 		format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 		format.fmt.pix.width = CONFIG_CAPTURE_WIDTH(main_mngr.config_ini);
@@ -98,6 +99,7 @@ int capture_init(struct v4l2cap_info *capture)
 				printf("ERROR: value is illegal !\n");
 		}
 		
+		/* 配置的格式与获取的相同，代表支持该格式 */
 		if(capture->format.fmt.pix.pixelformat == v4l2_fmt[i])
 		{
 			printf("try successfully.\n");
@@ -112,6 +114,7 @@ int capture_init(struct v4l2cap_info *capture)
 		goto ERR_4;
 	}
 
+	/* 开启内存映射，向驱动申请帧缓冲 */
 	memset(&reqbuf_param, 0, sizeof(struct v4l2_requestbuffers));
 	reqbuf_param.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	reqbuf_param.memory = V4L2_MEMORY_MMAP;
@@ -123,7 +126,7 @@ int capture_init(struct v4l2cap_info *capture)
 		goto ERR_6;
 	}
 
-	/* set video queue buffer */
+	/* 设置视频帧缓存队列 - set video queue buffer */
 	for(i=0; i<QUE_BUF_MAX_NUM; i++)
 	{
 		memset(&buffer[i], 0, sizeof(struct v4l2_buffer));
