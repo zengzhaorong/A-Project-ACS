@@ -35,7 +35,7 @@ int capture_init(struct v4l2cap_info *capture)
 
 	memset(capture, 0, sizeof(struct v4l2cap_info));
 
-	/* ´ò¿ªÉãÏñÍ·£¬open("/dev/video0", O_RDWR) */
+	/* æ‰“å¼€æ‘„åƒå¤´ï¼Œopen("/dev/video0", O_RDWR) */
 	capture->fd = open(CONFIG_CAPTURE_DEV(main_mngr.config_ini), O_RDWR);
 	if(capture->fd < 0)
 	{
@@ -45,7 +45,7 @@ int capture_init(struct v4l2cap_info *capture)
 	}
 	printf("open video dev [%s] successfully .\n", CONFIG_CAPTURE_DEV(main_mngr.config_ini));
 
-	/* »ñÈ¡ÉãÏñÍ·ËùÖ§³ÖµÄ¸ñÊ½ - get supported format */
+	/* è·å–æ‘„åƒå¤´æ‰€æ”¯æŒçš„æ ¼å¼ - get supported format */
 	memset(&fmtdesc, 0, sizeof(struct v4l2_fmtdesc));
 	fmtdesc.index = 0;
 	fmtdesc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -58,10 +58,10 @@ int capture_init(struct v4l2cap_info *capture)
 		}
 	}while(ret == 0);
 
-	/* ³¢ÊÔÅäÖÃÉãÏñÍ·¸ñÊ½£¬²âÊÔÊÇ·ñÖ§³ÖÄ³ÖÖ¸ñÊ½ - try the capture format */
+	/* å°è¯•é…ç½®æ‘„åƒå¤´æ ¼å¼ï¼Œæµ‹è¯•æ˜¯å¦æ”¯æŒæŸç§æ ¼å¼ - try the capture format */
 	for(i=0; i<sizeof(v4l2_fmt)/sizeof(int); i++)
 	{
-		/* ÅäÖÃÉãÏñÍ·¸ñÊ½ - configure video format */
+		/* é…ç½®æ‘„åƒå¤´æ ¼å¼ - configure video format */
 		memset(&format, 0, sizeof(struct v4l2_format));
 		format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 		format.fmt.pix.width = CONFIG_CAPTURE_WIDTH(main_mngr.config_ini);
@@ -99,7 +99,7 @@ int capture_init(struct v4l2cap_info *capture)
 				printf("ERROR: value is illegal !\n");
 		}
 		
-		/* ÅäÖÃµÄ¸ñÊ½Óë»ñÈ¡µÄÏàÍ¬£¬´ú±íÖ§³Ö¸Ã¸ñÊ½ */
+		/* é…ç½®çš„æ ¼å¼ä¸è·å–çš„ç›¸åŒï¼Œä»£è¡¨æ”¯æŒè¯¥æ ¼å¼ */
 		if(capture->format.fmt.pix.pixelformat == v4l2_fmt[i])
 		{
 			printf("try successfully.\n");
@@ -114,7 +114,7 @@ int capture_init(struct v4l2cap_info *capture)
 		goto ERR_4;
 	}
 
-	/* ¿ªÆôÄÚ´æÓ³Éä£¬ÏòÇı¶¯ÉêÇëÖ¡»º³å */
+	/* å¼€å¯å†…å­˜æ˜ å°„ï¼Œå‘é©±åŠ¨ç”³è¯·å¸§ç¼“å†² */
 	memset(&reqbuf_param, 0, sizeof(struct v4l2_requestbuffers));
 	reqbuf_param.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	reqbuf_param.memory = V4L2_MEMORY_MMAP;
@@ -126,7 +126,7 @@ int capture_init(struct v4l2cap_info *capture)
 		goto ERR_6;
 	}
 
-	/* ÉèÖÃÊÓÆµÖ¡»º´æ¶ÓÁĞ - set video queue buffer */
+	/* è®¾ç½®è§†é¢‘å¸§ç¼“å­˜é˜Ÿåˆ— - set video queue buffer */
 	for(i=0; i<QUE_BUF_MAX_NUM; i++)
 	{
 		memset(&buffer[i], 0, sizeof(struct v4l2_buffer));

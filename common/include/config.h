@@ -3,6 +3,10 @@
 
 /******************** get configure value ********************/
 
+// [LOGIN]
+#define CONFIG_LOGIN_COUNT(ini)         iniparser_getstring(ini, "LOGIN:loginCount", DEFAULT_LOGIN_COUNT)
+#define CONFIG_LOGIN_PWD(ini)           iniparser_getstring(ini, "LOGIN:loginPwd", DEFAULT_LOGIN_PWD)
+
 // [WINDOW]
 #define CONFIG_WINDOW_TITLE(ini)        iniparser_getstring(ini, "WINDOW:windowTitle", DEFAULT_WINDOW_TITLE)
 #define CONFIG_WINDOW_WIDTH(ini)        iniparser_getint(ini, "WINDOW:windowWidth", DEFAULT_WINDOW_WIDTH)
@@ -28,6 +32,10 @@
 
 
 /******************** default configure value ********************/
+
+// [LOGIN]
+#define DEFAULT_LOGIN_COUNT 		"914406940"
+#define DEFAULT_LOGIN_PWD    		"hello"
 
 // [WINDOW]
 #define DEFAULT_WINDOW_TITLE		"人脸识别系统"

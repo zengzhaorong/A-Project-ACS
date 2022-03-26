@@ -18,6 +18,7 @@ extern "C" {
 }
 #endif
 
+using namespace std;
 
 static MainWindow *mainwindow;
 extern struct main_mngr_info main_mngr;
@@ -25,14 +26,14 @@ extern struct main_mngr_info main_mngr;
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
+	QTextCodec *codec = QTextCodec::codecForName("GBK");
+	QImage image;
+	QFont font;
+	QPalette pa;
 	int y_pix = 0;
 	int funcArea_width;
 	int funcArea_height;
 	int widget_height;
-	QImage image;
-	QFont font;
-	QPalette pa;
-	QTextCodec *codec = QTextCodec::codecForName("GBK");
 
 	funcArea_width = CONFIG_WINDOW_WIDTH(main_mngr.config_ini) -CONFIG_CAPTURE_WIDTH(main_mngr.config_ini);
 	funcArea_height = CONFIG_WINDOW_HEIGHT(main_mngr.config_ini);
@@ -61,7 +62,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 
 	/* clock */
 	y_pix += Y_INTERV_PIXEL_EX;
-	widget_height = 90;
+	widget_height = 60;
 	clockLabel = new QLabel(mainWindow);
 	clockLabel->setWordWrap(true);	// adapt to text, can show multi row
 	clockLabel->setGeometry(FUNC_AREA_PIXEL_X +5, y_pix, funcArea_width, widget_height);	// height: set more bigger to adapt to arm
@@ -70,7 +71,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 
 #ifdef MANAGER_CLIENT_ENABLE
 	image.load(EXTRAINFO_MNGR_IMG);
-	widget_height = 130;
+	widget_height = 120;
 	(void)funcArea_height;
 #else
 	image.load(EXTRAINFO_USER_IMG);
@@ -83,37 +84,99 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 	y_pix += widget_height;
 
 #ifdef MANAGER_CLIENT_ENABLE
+	/* 登陆账号输入框 */
+	y_pix += Y_INTERV_PIXEL_EX *5;
+	loginCountEdit = new QLineEdit(mainWindow);
+	loginCountEdit->setPlaceholderText(codec->toUnicode(TEXT_COUNT));
+	loginCountEdit->setGeometry(FUNC_AREA_PIXEL_X +5, y_pix, 150, WIDGET_HEIGHT_PIXEL);
+	y_pix += WIDGET_HEIGHT_PIXEL;
 
-	/* user id edit - �û�ID����� */
+	/* 登陆密码输入框 */
+	y_pix += Y_INTERV_PIXEL_EX;
+	loginPwdEdit = new QLineEdit(mainWindow);
+	loginPwdEdit->setPlaceholderText(codec->toUnicode(TEXT_PASSWORD));
+	loginPwdEdit->setGeometry(FUNC_AREA_PIXEL_X +5, y_pix, 150, WIDGET_HEIGHT_PIXEL);
+	loginPwdEdit->setEchoMode(QLineEdit::Password);
+	y_pix += WIDGET_HEIGHT_PIXEL;
+
+	/* 登陆按钮 */
+	y_pix += Y_INTERV_PIXEL_EX;
+	loginBtn = new QPushButton(mainWindow);
+	loginBtn->setText(codec->toUnicode(TEXT_LOGIN));
+    connect(loginBtn, SIGNAL(clicked()), this, SLOT(login_handle()));
+	loginBtn->setGeometry(FUNC_AREA_PIXEL_X +30, y_pix, 100, WIDGET_HEIGHT_PIXEL);
+	y_pix += WIDGET_HEIGHT_PIXEL;
+#else
+	// 显示右侧区功能控件
+	show_func_area();
+#endif
+
+	buf_size = CONFIG_CAPTURE_WIDTH(main_mngr.config_ini) *CONFIG_CAPTURE_HEIGH(main_mngr.config_ini) *3;
+	video_buf = (unsigned char *)malloc(buf_size);
+	if(video_buf == NULL)
+	{
+		buf_size = 0;
+		printf("ERROR: malloc for video_buf failed!");
+	}
+
+	/* set timer to show image */
+	timer = new QTimer(this);
+	connect(timer, SIGNAL(timeout()), this, SLOT(showMainwindow()));
+	timer->start(TIMER_INTERV_MS);
+
+	tmpShowTimer = new QTimer(this);
+
+	sys_state = &main_mngr.work_state;
+	login_flag = 0;
+}
+
+MainWindow::~MainWindow(void)
+{
+	
+}
+
+// 显示右侧区功能控件
+void MainWindow::show_func_area(void)
+{
+	QTextCodec *codec = QTextCodec::codecForName("GBK");
+	int y_pix = 200;
+
+#ifdef MANAGER_CLIENT_ENABLE
+	/* user id edit - 用户ID输入框 */
 	y_pix += Y_INTERV_PIXEL_EX;
 	userIdEdit = new QLineEdit(mainWindow);
 	userIdEdit->setPlaceholderText(codec->toUnicode(TEXT_USER_ID));
 	userIdEdit->setGeometry(FUNC_AREA_PIXEL_X +5, y_pix, 50, WIDGET_HEIGHT_PIXEL);
-	/* user name edit - �û�������� */
+	userIdEdit->show();
+	/* user name edit - 用户名输入框 */
 	userNameEdit = new QLineEdit(mainWindow);
 	userNameEdit->setPlaceholderText(codec->toUnicode(TEXT_USER_NAME));
 	userNameEdit->setGeometry(FUNC_AREA_PIXEL_X +5 +50 +2, y_pix, 100, WIDGET_HEIGHT_PIXEL);
+	userNameEdit->show();
 	y_pix += WIDGET_HEIGHT_PIXEL;
-	/* add user button - �����û���ť */
+	/* add user button - 添加用户按钮 */
 	y_pix += Y_INTERV_PIXEL_IN;
 	addUserBtn = new QPushButton(mainWindow);
 	addUserBtn->setText(codec->toUnicode(TEXT_ADD_USER));
     connect(addUserBtn, SIGNAL(clicked()), this, SLOT(addUser()));
 	addUserBtn->setGeometry(FUNC_AREA_PIXEL_X +30, y_pix, 100, WIDGET_HEIGHT_PIXEL);
+	addUserBtn->show();
 	y_pix += WIDGET_HEIGHT_PIXEL;
 
-	/* user list box - �û��б������˵���*/
+	/* user list box - 用户列表下拉菜单栏*/
 	y_pix += Y_INTERV_PIXEL_EX;
 	userListBox = new QComboBox(mainWindow);
 	userListBox->setGeometry(FUNC_AREA_PIXEL_X +5, y_pix, 150, WIDGET_HEIGHT_PIXEL);
 	userListBox->setEditable(true);
+	userListBox->show();
 	y_pix += WIDGET_HEIGHT_PIXEL;
-	/* delete user button - ɾ���û���ť*/
+	/* delete user button - 删除用户按钮*/
 	y_pix += Y_INTERV_PIXEL_IN;
 	delUserBtn = new QPushButton(mainWindow);
 	delUserBtn->setText(codec->toUnicode(TEXT_DEL_USER));
     connect(delUserBtn, SIGNAL(clicked()), this, SLOT(deleteUser()));
 	delUserBtn->setGeometry(FUNC_AREA_PIXEL_X +30, y_pix, 100, WIDGET_HEIGHT_PIXEL);
+	delUserBtn->show();
 	y_pix += WIDGET_HEIGHT_PIXEL;
 
 	/* display history record button */
@@ -122,6 +185,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 	showHistRecordBtn->setText(codec->toUnicode(TEXT_HIST_REC));
     connect(showHistRecordBtn, SIGNAL(clicked()), this, SLOT(showHistRecord()));
 	showHistRecordBtn->setGeometry(FUNC_AREA_PIXEL_X +30, y_pix, 100, WIDGET_HEIGHT_PIXEL);
+	showHistRecordBtn->show();
 	y_pix += WIDGET_HEIGHT_PIXEL;
 	
 	/* save record button */
@@ -147,43 +211,32 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 	tableView->setGeometry(0, 0, CONFIG_CAPTURE_WIDTH(main_mngr.config_ini), CONFIG_CAPTURE_HEIGH(main_mngr.config_ini));
 	tableView->hide();
 	
-#endif
-
 	y_pix += Y_INTERV_PIXEL_IN;
 	takePhotoBtn = new QPushButton(mainWindow);
 	takePhotoBtn->setText(codec->toUnicode(TEXT_TAKE_PHOTO));
     connect(takePhotoBtn, SIGNAL(clicked()), this, SLOT(takePhoto()));
 	takePhotoBtn->setGeometry(FUNC_AREA_PIXEL_X +30, y_pix, 100, WIDGET_HEIGHT_PIXEL);
+	takePhotoBtn->show();
+	y_pix += WIDGET_HEIGHT_PIXEL;
+
+	y_pix += Y_INTERV_PIXEL_IN;
+	logoutBtn = new QPushButton(mainWindow);
+	logoutBtn->setText(codec->toUnicode(TEXT_LOGOUT));
+    connect(logoutBtn, SIGNAL(clicked()), this, SLOT(logout_handle()));
+	logoutBtn->setGeometry(FUNC_AREA_PIXEL_X +30, y_pix, 100, WIDGET_HEIGHT_PIXEL);
+	logoutBtn->show();
+
+#endif
 
 #if !defined(USER_CLIENT_ENABLE) && defined(MANAGER_CLIENT_ENABLE)
 	switchCaptureBtn = new QPushButton(mainWindow);
 	switchCaptureBtn->setText(codec->toUnicode(TEXT_SWIT_CAPTURE));
     connect(switchCaptureBtn, SIGNAL(clicked()), this, SLOT(switchCapture()));
 	switchCaptureBtn->setGeometry(FUNC_AREA_PIXEL_X -80, CONFIG_CAPTURE_HEIGH(main_mngr.config_ini) -WIDGET_HEIGHT_PIXEL, 80, WIDGET_HEIGHT_PIXEL);
+	switchCaptureBtn->show();
 #endif
 
-	buf_size = CONFIG_CAPTURE_WIDTH(main_mngr.config_ini) *CONFIG_CAPTURE_HEIGH(main_mngr.config_ini) *3;
-	video_buf = (unsigned char *)malloc(buf_size);
-	if(video_buf == NULL)
-	{
-		buf_size = 0;
-		printf("ERROR: malloc for video_buf failed!");
-	}
 
-	/* set timer to show image */
-	timer = new QTimer(this);
-	connect(timer, SIGNAL(timeout()), this, SLOT(showMainwindow()));
-	timer->start(TIMER_INTERV_MS);
-
-	tmpShowTimer = new QTimer(this);
-
-	sys_state = &main_mngr.work_state;
-
-}
-
-MainWindow::~MainWindow(void)
-{
-	
 }
 
 void MainWindow::showMainwindow(void)
@@ -199,6 +252,12 @@ void MainWindow::showMainwindow(void)
 	QString strDate = time.toString("yyyy-MM-dd hh:mm:ss dddd");
 	clockLabel->setText(strDate);
 
+	if(login_flag == 0)
+	{
+		timer->start(TIMER_INTERV_MS);
+		return ;
+	}
+
 	/* show capture image */
 	ret = capture_get_newframe(video_buf, buf_size, &len);
 	if(ret == 0)
@@ -207,7 +266,7 @@ void MainWindow::showMainwindow(void)
 
 		videoQImage = jpeg_to_QImage(video_buf, len);
 
-		// ���ձ���ͼƬ
+		// 拍照保存图片
 		if(takePhotoFlag)
 		{
 			QString strTime = time.toString("yyMMddhhmmss");
@@ -289,6 +348,70 @@ void MainWindow::drawFaceRectangle(QImage &img)
 		}
 	}
 
+}
+
+// 点击登陆按钮后的处理
+void MainWindow::login_handle(void)
+{
+	QTextCodec *codec = QTextCodec::codecForName("GBK");
+	QString qStr_count;
+	QString qStr_pwd;
+	QByteArray ba;
+	char str_count[64] = {0};
+	char str_pwd[64] = {0};
+
+	qStr_count = loginCountEdit->text();
+	qStr_pwd = loginPwdEdit->text();
+	if(qStr_count.length() <= 0 || qStr_pwd.length() <= 0)
+	{
+		printf("%s: QLineEdit is empty !\n", __FUNCTION__);
+		QMessageBox::information(this,"Warning", codec->toUnicode(TEXT_LOGIN_FAILED),QMessageBox::Ok,QMessageBox::NoButton);
+		return ;
+	}
+
+	ba = qStr_count.toLatin1();
+	strcpy(str_count, ba.data());
+	ba = qStr_pwd.toLatin1();
+	strcpy(str_pwd, ba.data());
+
+	if(!strcmp(str_count, CONFIG_LOGIN_COUNT(main_mngr.config_ini)) && !strcmp(str_pwd, CONFIG_LOGIN_PWD(main_mngr.config_ini)))
+	{
+		loginCountEdit->hide();
+		loginPwdEdit->hide();
+		loginBtn->hide();
+		login_flag = 1;
+		show_func_area();
+		proto_0x07_getUserList(main_mngr.mngr_handle);
+	}
+	else
+	{
+		QMessageBox::information(this,"Warning", codec->toUnicode(TEXT_LOGIN_FAILED),QMessageBox::Ok,QMessageBox::NoButton);
+	}
+
+}
+
+// 点击登陆按钮后的处理
+void MainWindow::logout_handle(void)
+{
+	userIdEdit->hide();
+	userNameEdit->hide();
+	addUserBtn->hide();
+	userListBox->hide();
+	delUserBtn->hide();
+	showHistRecordBtn->hide();
+	saveRecordBtn->hide();
+	resetRecordBtn->hide();
+	tableView->hide();
+	takePhotoBtn->hide();
+	logoutBtn->hide();
+
+	loginCountEdit->show();
+	loginPwdEdit->clear();
+	loginPwdEdit->show();
+	loginBtn->show();
+
+	login_flag = 0;
+	videoArea->setPixmap(QPixmap::fromImage(backgroundImg));
 }
 
 void MainWindow::addUser(void)
