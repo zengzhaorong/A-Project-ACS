@@ -643,7 +643,7 @@ int mainwin_set_userList(int flag, int userCnt, char *usr_name)
 	int index;
 	int i;
 
-	if(usr_name == NULL)
+	if(!mainwindow->login_flag || usr_name == NULL)
 		return -1;
 
 	for(i=0; i<userCnt; i++)
