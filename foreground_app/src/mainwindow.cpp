@@ -700,7 +700,7 @@ int mainwin_set_recordList(uint32_t time, int id, char *usr_name, int confid)
 	int modelRowCnt = 0;
 
 	ptm = localtime(&tmpTime);
-	sprintf(time_str, "%04d-%02d-%02d %02d:%02d:%02d", 1900+ptm->tm_year, ptm->tm_mon, ptm->tm_mday, ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
+	sprintf(time_str, "%04d-%02d-%02d %02d:%02d:%02d", 1900+ptm->tm_year, ptm->tm_mon+1, ptm->tm_mday, ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
 
 	sprintf(id_str, "%d", id);
 	sprintf(confid_str, "%d%c", confid, '%');
