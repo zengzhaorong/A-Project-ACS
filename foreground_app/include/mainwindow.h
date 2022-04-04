@@ -42,11 +42,6 @@ extern "C" {
 #define EXTRAINFO_USER_IMG		"resource/extraInfo_user.png"
 
 /* tips text, support Chinese */
-#define TEXT_COUNT				"账号"
-#define TEXT_PASSWORD			"密码"
-#define TEXT_LOGIN				"登陆"
-#define TEXT_LOGOUT				"退出登陆"
-#define TEXT_LOGIN_FAILED		"账号或密码错误！请重新输入"
 #define NOT_CONNECT_SERVER		"未连接服务器"
 #define BEGIN_ADD_FACE_TEXT		"录入人脸：请正对摄像头"
 #define SUCCESS_ADD_FACE_TEXT	"录入人脸成功"
@@ -77,10 +72,7 @@ public:
 	~MainWindow();
 
 private slots:
-	void show_func_area(void);
 	void showMainwindow(void);
-	void login_handle(void);
-	void logout_handle(void);
 	void addUser(void);
 	void deleteUser(void);
 	void showHistRecord(void);
@@ -91,6 +83,7 @@ private slots:
 	void textOnVideo_show_over(void);
 	
 public:
+	void show_func_area(void);
 	void drawFaceRectangle(QImage &img);
 	int switch_mainwin_mode(mainwin_mode_e mode);
 
@@ -101,10 +94,6 @@ private:
 	QTimer 			*timer;				// display timer
 	QLabel			*clockLabel;		// display clock
 	QLabel 			*extraInfo;			// show as image
-	QLineEdit		*loginCountEdit;	// login count
-	QLineEdit		*loginPwdEdit;		// login password
-	QPushButton 	*loginBtn;			// login button
-	QPushButton 	*logoutBtn;			// logout button
 	QLineEdit		*userIdEdit;		// edit add user id
 	QLineEdit		*userNameEdit;		// edit add user name
 	QPushButton 	*addUserBtn;		// add user button
@@ -124,7 +113,6 @@ public:
 	QTableView		*tableView;
 	QStandardItemModel *listModel;
 	QRect 			face_rects;			// face rectangles
-	int 			login_flag;			// 0-未登陆，1-已登陆
 	int 			face_id;
 	char 			userRecogn[USER_NAME_LEN];
 	uint8_t			confidence;

@@ -83,33 +83,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 	extraInfo->show();
 	y_pix += widget_height;
 
-#ifdef MANAGER_CLIENT_ENABLE
-	/* 登陆账号输入框 */
-	y_pix += Y_INTERV_PIXEL_EX *5;
-	loginCountEdit = new QLineEdit(mainWindow);
-	loginCountEdit->setPlaceholderText(codec->toUnicode(TEXT_COUNT));
-	loginCountEdit->setGeometry(FUNC_AREA_PIXEL_X +5, y_pix, 150, WIDGET_HEIGHT_PIXEL);
-	y_pix += WIDGET_HEIGHT_PIXEL;
-
-	/* 登陆密码输入框 */
-	y_pix += Y_INTERV_PIXEL_EX;
-	loginPwdEdit = new QLineEdit(mainWindow);
-	loginPwdEdit->setPlaceholderText(codec->toUnicode(TEXT_PASSWORD));
-	loginPwdEdit->setGeometry(FUNC_AREA_PIXEL_X +5, y_pix, 150, WIDGET_HEIGHT_PIXEL);
-	loginPwdEdit->setEchoMode(QLineEdit::Password);
-	y_pix += WIDGET_HEIGHT_PIXEL;
-
-	/* 登陆按钮 */
-	y_pix += Y_INTERV_PIXEL_EX;
-	loginBtn = new QPushButton(mainWindow);
-	loginBtn->setText(codec->toUnicode(TEXT_LOGIN));
-    connect(loginBtn, SIGNAL(clicked()), this, SLOT(login_handle()));
-	loginBtn->setGeometry(FUNC_AREA_PIXEL_X +30, y_pix, 100, WIDGET_HEIGHT_PIXEL);
-	y_pix += WIDGET_HEIGHT_PIXEL;
-#else
 	// 显示右侧区功能控件
 	show_func_area();
-#endif
 
 	buf_size = CONFIG_CAPTURE_WIDTH(main_mngr.config_ini) *CONFIG_CAPTURE_HEIGH(main_mngr.config_ini) *3;
 	video_buf = (unsigned char *)malloc(buf_size);
@@ -127,7 +102,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 	tmpShowTimer = new QTimer(this);
 
 	sys_state = &main_mngr.work_state;
-	login_flag = 0;
 }
 
 MainWindow::~MainWindow(void)
@@ -219,13 +193,6 @@ void MainWindow::show_func_area(void)
 	takePhotoBtn->show();
 	y_pix += WIDGET_HEIGHT_PIXEL;
 
-	y_pix += Y_INTERV_PIXEL_IN;
-	logoutBtn = new QPushButton(mainWindow);
-	logoutBtn->setText(codec->toUnicode(TEXT_LOGOUT));
-    connect(logoutBtn, SIGNAL(clicked()), this, SLOT(logout_handle()));
-	logoutBtn->setGeometry(FUNC_AREA_PIXEL_X +30, y_pix, 100, WIDGET_HEIGHT_PIXEL);
-	logoutBtn->show();
-
 #endif
 
 #if !defined(USER_CLIENT_ENABLE) && defined(MANAGER_CLIENT_ENABLE)
@@ -251,12 +218,6 @@ void MainWindow::showMainwindow(void)
 	QDateTime time = QDateTime::currentDateTime();
 	QString strDate = time.toString("yyyy-MM-dd hh:mm:ss dddd");
 	clockLabel->setText(strDate);
-
-	if(login_flag == 0)
-	{
-		timer->start(TIMER_INTERV_MS);
-		return ;
-	}
 
 	/* show capture image */
 	ret = capture_get_newframe(video_buf, buf_size, &len);
@@ -348,70 +309,6 @@ void MainWindow::drawFaceRectangle(QImage &img)
 		}
 	}
 
-}
-
-// 点击登陆按钮后的处理
-void MainWindow::login_handle(void)
-{
-	QTextCodec *codec = QTextCodec::codecForName("GBK");
-	QString qStr_count;
-	QString qStr_pwd;
-	QByteArray ba;
-	char str_count[64] = {0};
-	char str_pwd[64] = {0};
-
-	qStr_count = loginCountEdit->text();
-	qStr_pwd = loginPwdEdit->text();
-	if(qStr_count.length() <= 0 || qStr_pwd.length() <= 0)
-	{
-		printf("%s: QLineEdit is empty !\n", __FUNCTION__);
-		QMessageBox::information(this,"Warning", codec->toUnicode(TEXT_LOGIN_FAILED),QMessageBox::Ok,QMessageBox::NoButton);
-		return ;
-	}
-
-	ba = qStr_count.toLatin1();
-	strcpy(str_count, ba.data());
-	ba = qStr_pwd.toLatin1();
-	strcpy(str_pwd, ba.data());
-
-	if(!strcmp(str_count, CONFIG_LOGIN_COUNT(main_mngr.config_ini)) && !strcmp(str_pwd, CONFIG_LOGIN_PWD(main_mngr.config_ini)))
-	{
-		loginCountEdit->hide();
-		loginPwdEdit->hide();
-		loginBtn->hide();
-		login_flag = 1;
-		show_func_area();
-		proto_0x07_getUserList(main_mngr.mngr_handle);
-	}
-	else
-	{
-		QMessageBox::information(this,"Warning", codec->toUnicode(TEXT_LOGIN_FAILED),QMessageBox::Ok,QMessageBox::NoButton);
-	}
-
-}
-
-// 点击登陆按钮后的处理
-void MainWindow::logout_handle(void)
-{
-	userIdEdit->hide();
-	userNameEdit->hide();
-	addUserBtn->hide();
-	userListBox->hide();
-	delUserBtn->hide();
-	showHistRecordBtn->hide();
-	saveRecordBtn->hide();
-	resetRecordBtn->hide();
-	tableView->hide();
-	takePhotoBtn->hide();
-	logoutBtn->hide();
-
-	loginCountEdit->show();
-	loginPwdEdit->clear();
-	loginPwdEdit->show();
-	loginBtn->show();
-
-	login_flag = 0;
-	videoArea->setPixmap(QPixmap::fromImage(backgroundImg));
 }
 
 void MainWindow::addUser(void)
@@ -643,7 +540,7 @@ int mainwin_set_userList(int flag, int userCnt, char *usr_name)
 	int index;
 	int i;
 
-	if(!mainwindow->login_flag || usr_name == NULL)
+	if(usr_name == NULL)
 		return -1;
 
 	for(i=0; i<userCnt; i++)
